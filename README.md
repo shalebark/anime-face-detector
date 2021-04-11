@@ -2,8 +2,6 @@
 
 https://github.com/qhgz2013/anime-face-detector.git
 
-## ONLY CHANGES MADE ARE A WRAPPER AND CONVERSION TO V2 TO REMOVE WARNINGS
-
 # Anime-Face-Detector
 A Faster-RCNN based anime face detector.
 
