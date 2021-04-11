@@ -12,8 +12,8 @@ class FasterRCNNSlim:
                         resnet_v1_block('block2', base_depth=128, num_units=4, stride=2),
                         resnet_v1_block('block3', base_depth=256, num_units=23, stride=1),
                         resnet_v1_block('block4', base_depth=512, num_units=3, stride=1)]
-        self._image = tf.placeholder(tf.float32, shape=[1, None, None, 3])
-        self._im_info = tf.placeholder(tf.float32, shape=[3])
+        self._image = tf.compat.v1.placeholder(tf.float32, shape=[1, None, None, 3])
+        self._im_info = tf.compat.v1.placeholder(tf.float32, shape=[3])
 
         self._anchor_scales = [4, 8, 16, 32]
         self._num_scales = len(self._anchor_scales)
@@ -26,35 +26,35 @@ class FasterRCNNSlim:
 
         with arg_scope([slim.conv2d, slim.conv2d_in_plane, slim.conv2d_transpose, slim.separable_conv2d,
                         slim.fully_connected],
-                       weights_regularizer=slim.l2_regularizer(0.0001),
-                       biases_regularizer=tf.no_regularizer,
-                       biases_initializer=tf.constant_initializer(0.0)):
+                       weights_regularizer=tf.keras.regularizers.l2(0.5 * (0.0001)),
+                       biases_regularizer=tf.compat.v1.no_regularizer,
+                       biases_initializer=tf.compat.v1.constant_initializer(0.0)):
             # in _build_network
-            initializer = tf.random_normal_initializer(stddev=0.01)
-            initializer_bbox = tf.random_normal_initializer(stddev=0.001)
+            initializer = tf.compat.v1.random_normal_initializer(stddev=0.01)
+            initializer_bbox = tf.compat.v1.random_normal_initializer(stddev=0.001)
             # in _image_to_head
             with slim.arg_scope(self._resnet_arg_scope()):
                 # in _build_base
-                with tf.variable_scope(self._scope, self._scope):
+                with tf.compat.v1.variable_scope(self._scope, self._scope):
                     net_conv = conv2d_same(self._image, 64, 7, stride=2, scope='conv1')
-                    net_conv = tf.pad(net_conv, [[0, 0], [1, 1], [1, 1], [0, 0]])
+                    net_conv = tf.pad(tensor=net_conv, paddings=[[0, 0], [1, 1], [1, 1], [0, 0]])
                     net_conv = slim.max_pool2d(net_conv, [3, 3], stride=2, padding='VALID', scope='pool1')
                 net_conv, _ = resnet_v1(net_conv, self._blocks[:-1], global_pool=False, include_root_block=False,
                                         scope=self._scope)
-            with tf.variable_scope(self._scope, self._scope):
+            with tf.compat.v1.variable_scope(self._scope, self._scope):
                 # in _anchor_component
-                with tf.variable_scope('ANCHOR-default'):
-                    height = tf.cast(tf.ceil(self._im_info[0] / 16.0), dtype=tf.int32)
-                    width = tf.cast(tf.ceil(self._im_info[1] / 16.0), dtype=tf.int32)
+                with tf.compat.v1.variable_scope('ANCHOR-default'):
+                    height = tf.cast(tf.math.ceil(self._im_info[0] / 16.0), dtype=tf.int32)
+                    width = tf.cast(tf.math.ceil(self._im_info[1] / 16.0), dtype=tf.int32)
 
                     shift_x = tf.range(width) * 16
                     shift_y = tf.range(height) * 16
                     shift_x, shift_y = tf.meshgrid(shift_x, shift_y)
                     sx = tf.reshape(shift_x, [-1])
                     sy = tf.reshape(shift_y, [-1])
-                    shifts = tf.transpose(tf.stack([sx, sy, sx, sy]))
+                    shifts = tf.transpose(a=tf.stack([sx, sy, sx, sy]))
                     k = width * height
-                    shifts = tf.transpose(tf.reshape(shifts, [1, k, 4]), perm=[1, 0, 2])
+                    shifts = tf.transpose(a=tf.reshape(shifts, [1, k, 4]), perm=[1, 0, 2])
 
                     anchors = np.array([[-24, -24, 39, 39], [-56, -56, 71, 71],
                                         [-120, -120, 135, 135], [-248, -248, 263, 263]], dtype=np.int32)
@@ -82,7 +82,7 @@ class FasterRCNNSlim:
                                             scope='rpn_bbox_pred')
 
                 # in _proposal_layer
-                with tf.variable_scope('rois'):
+                with tf.compat.v1.variable_scope('rois'):
                     post_nms_topn = 300
                     nms_thresh = 0.7
                     scores = rpn_cls_prob[:, :, :, self._num_anchors:]
@@ -121,13 +121,13 @@ class FasterRCNNSlim:
                     boxes = tf.cast(tf.gather(proposals, indices), dtype=tf.float32)
                     # rpn_scores = tf.reshape(tf.gather(scores, indices), [-1, 1])
 
-                    batch_inds = tf.zeros([tf.shape(indices)[0], 1], dtype=tf.float32)
+                    batch_inds = tf.zeros([tf.shape(input=indices)[0], 1], dtype=tf.float32)
                     rois = tf.concat([batch_inds, boxes], 1)
 
                 # in _crop_pool_layer
-                with tf.variable_scope('pool5'):
+                with tf.compat.v1.variable_scope('pool5'):
                     batch_ids = tf.squeeze(tf.slice(rois, [0, 0], [-1, 1], name='bath_id'), [1])
-                    bottom_shape = tf.shape(net_conv)
+                    bottom_shape = tf.shape(input=net_conv)
                     height = (tf.cast(bottom_shape[1], dtype=tf.float32) - 1) * 16.0
                     width = (tf.cast(bottom_shape[2], dtype=tf.float32) - 1) * 16.0
                     x1 = tf.slice(rois, [0, 1], [-1, 1], name='x1') / width
@@ -141,8 +141,8 @@ class FasterRCNNSlim:
             with slim.arg_scope(self._resnet_arg_scope()):
                 fc7, _ = resnet_v1(pool5, self._blocks[-1:], global_pool=False, include_root_block=False,
                                    scope=self._scope)
-                fc7 = tf.reduce_mean(fc7, axis=[1, 2])
-            with tf.variable_scope(self._scope, self._scope):
+                fc7 = tf.reduce_mean(input_tensor=fc7, axis=[1, 2])
+            with tf.compat.v1.variable_scope(self._scope, self._scope):
                 # in _region_classification
                 cls_score = slim.fully_connected(fc7, 2, weights_initializer=initializer, trainable=False,
                                                  activation_fn=None, scope='cls_score')
@@ -168,11 +168,11 @@ class FasterRCNNSlim:
             'epsilon': 1e-5,
             'scale': True,
             'trainable': False,
-            'updates_collections': tf.GraphKeys.UPDATE_OPS
+            'updates_collections': tf.compat.v1.GraphKeys.UPDATE_OPS
         }
         with arg_scope([slim.conv2d],
-                       weights_regularizer=slim.l2_regularizer(0.0001),
-                       weights_initializer=slim.variance_scaling_initializer(),
+                       weights_regularizer=tf.keras.regularizers.l2(0.5 * (0.0001)),
+                       weights_initializer=tf.compat.v1.keras.initializers.VarianceScaling(scale=2.0),
                        trainable=False,
                        activation_fn=tf.nn.relu,
                        normalizer_fn=slim.batch_norm,
@@ -182,17 +182,17 @@ class FasterRCNNSlim:
 
     @staticmethod
     def _reshape(bottom, num_dim, name):
-        input_shape = tf.shape(bottom)
-        with tf.variable_scope(name):
-            to_caffe = tf.transpose(bottom, [0, 3, 1, 2])
+        input_shape = tf.shape(input=bottom)
+        with tf.compat.v1.variable_scope(name):
+            to_caffe = tf.transpose(a=bottom, perm=[0, 3, 1, 2])
             reshaped = tf.reshape(to_caffe, [1, num_dim, -1, input_shape[2]])
-            to_tf = tf.transpose(reshaped, [0, 2, 3, 1])
+            to_tf = tf.transpose(a=reshaped, perm=[0, 2, 3, 1])
         return to_tf
 
     @staticmethod
     def _softmax(bottom, name):
         if name.startswith('rpn_cls_prob_reshape'):
-            input_shape = tf.shape(bottom)
+            input_shape = tf.shape(input=bottom)
             bottom_reshaped = tf.reshape(bottom, [-1, input_shape[-1]])
             reshaped_score = tf.nn.softmax(bottom_reshaped, name=name)
             return tf.reshape(reshaped_score, input_shape)

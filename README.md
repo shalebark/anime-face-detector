@@ -1,9 +1,15 @@
+# THIS IS A FORK OF THIS:
+
+https://github.com/qhgz2013/anime-face-detector.git
+
+## ONLY CHANGES MADE ARE A WRAPPER AND CONVERSION TO V2 TO REMOVE WARNINGS
+
 # Anime-Face-Detector
 A Faster-RCNN based anime face detector.
 
-This detector is trained on 6000 training samples and 641 testing samples, randomly selected from the dataset which is crawled from top 100 [pixiv daily ranking](https://www.pixiv.net/ranking.php?mode=daily).  
+This detector is trained on 6000 training samples and 641 testing samples, randomly selected from the dataset which is crawled from top 100 [pixiv daily ranking](https://www.pixiv.net/ranking.php?mode=daily).
 
-Thanks to [OpenCV based Anime face detector](https://github.com/nagadomi/lbpcascade_animeface) written by nagadomi, which helps labelling the data. 
+Thanks to [OpenCV based Anime face detector](https://github.com/nagadomi/lbpcascade_animeface) written by nagadomi, which helps labelling the data.
 
 The original implementation of Faster-RCNN using Tensorflow can be found [here](https://github.com/endernewton/tf-faster-rcnn)
 
@@ -19,9 +25,9 @@ The original implementation of Faster-RCNN using Tensorflow can be found [here](
     ```bash
     git clone https://github.com/qhgz2013/anime-face-detector.git
     ```
-2. Download the pre-trained model  
-    Google Drive: [here](https://drive.google.com/open?id=1WjBgfOUqp4sdRd9BHs4TkdH2EcBtV5ri)    
-    Baidu Netdisk: [here](https://pan.baidu.com/s/1bvpCp1sbD7t9qnta8IhpmA)  
+2. Download the pre-trained model
+    Google Drive: [here](https://drive.google.com/open?id=1WjBgfOUqp4sdRd9BHs4TkdH2EcBtV5ri)
+    Baidu Netdisk: [here](https://pan.baidu.com/s/1bvpCp1sbD7t9qnta8IhpmA)
 3. Unzip the model file into `model` directory
 4. Build the CPU NMS model (skip this step if use PY_NMS with argument: `-nms-type PY_NMS`)
     ```bash
@@ -93,5 +99,5 @@ We've uploaded the dataset to Google drive [here](https://drive.google.com/open?
 
 ## Citation and declaration
 
-Feel free to cite this repo and dataset.  
+Feel free to cite this repo and dataset.
 This work is not related to my research team and lab, just my personal interest.
