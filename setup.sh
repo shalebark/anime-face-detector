@@ -1,3 +1,5 @@
+cd "$(dirname "$0")"
+
 # download the model
 
 # snippet from https://gist.github.com/darencard/079246e43e3c4b97e373873c6c9a3798
