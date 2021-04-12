@@ -1,4 +1,4 @@
-# THIS IS A FORK OF THIS:
+# THIS IS A FORK OF THIS REPOSITORY:
 
 https://github.com/qhgz2013/anime-face-detector.git
 
